@@ -12,6 +12,15 @@ out vec2 ourTexPos;
 out vec3 ourNormal;
 out vec3 FragPos;
 
+out NORMALS {
+	vec3 front;
+	vec3 back;
+	vec3 left;
+	vec3 right;
+	vec3 top;
+	vec3 bottom;
+} normals;
+
 void main()
 {
 	gl_Position = projection * view * model * vec4(aPos, 1.0f);
@@ -21,4 +30,11 @@ void main()
 	
 	mat3 normalMatrix = mat3(transpose(inverse(model)));
 	ourNormal = normalMatrix * aNormal;
+
+	normals.front	= normalMatrix * vec3(0.0f, 0.0f, -1.0f);
+	normals.back	= normalMatrix * vec3(0.0f, 0.0f, 1.0f);
+	normals.left	= normalMatrix * vec3(-1.0f, 0.0f, 0.0f);
+	normals.right	= normalMatrix * vec3(1.0f, 0.0f, 0.0f);
+	normals.top		= normalMatrix * vec3(0.0f, 1.0f, 0.0f);
+	normals.bottom	= normalMatrix * vec3(0.0f, -1.0f, 0.0f);
 }

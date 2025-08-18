@@ -22,6 +22,7 @@ public:
 
 	CubeType Type() const;
 	Texture2D Texture() const;
+	Material GetMaterial() const;
 
 private:
 	void InitializeType();

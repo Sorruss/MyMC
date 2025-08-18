@@ -68,7 +68,7 @@ Game::~Game()
 void Game::run()
 {
 	ShaderProgram& defaultShader = ResourceManager::GetShader("default");
-	Chunks.emplace_back(glm::vec3(0.0f));
+	Chunks.emplace_back(glm::vec2(0.0f, 0.0f));
 
 	float lastDT = 0.0f;
 	while (!glfwWindowShouldClose(window))

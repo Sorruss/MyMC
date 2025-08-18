@@ -119,7 +119,7 @@ void ShaderProgram::BindMaterial(const Material& material) const
 	BindUniform1i("material.specular", material.specular);
 	BindUniform1i("material.emissive", material.emissive);
 	BindUniform1f("material.shininess", material.shininess);
-	BindUniformVec3("material.tint", material.tint);
+	BindUniformVec3("material.tintTop", material.tintTop);
 }
 
 void ShaderProgram::SetLights(int value) const

@@ -21,13 +21,14 @@ struct Material
 	GLuint specular;
 	GLuint emissive;
 	float shininess = 32.0f;
-	glm::vec3 tint = glm::vec3(1.0f);
+	
+	glm::vec3 tintTop = glm::vec3(1.0f);
 
 	friend std::ostream& operator<<(std::ostream& stream, const Material& material)
 	{
-		stream << "diffuse: " << material.diffuse
-			<< ", specular: " << material.specular << ", emissive: " << material.emissive
-			<< ", shininess: " << material.shininess;
+		stream << "diffuse: " << material.diffuse << ", specular: " << material.specular
+			<< ", emissive: " << material.emissive << ", shininess: " << material.shininess
+			<< ", tintTop: (" << material.tintTop.x << "; " << material.tintTop.y << "; " << material.tintTop.z << ')';
 		return stream;
 	}
 };

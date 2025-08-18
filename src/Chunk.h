@@ -11,6 +11,13 @@
 #include "Array3D.h"
 #include <unordered_set>
 
+struct Buffers
+{
+	VAO vao;
+	VBO vbo;
+	EBO ebo;
+};
+
 class Chunk
 {
 public:
@@ -22,15 +29,19 @@ public:
 private:
 	float* const GenChunk();
 	void GenBlocks(float* const heightMap);
-	void GenBuffers();
+	void GenBuffers(const CubeType& type);
+	void GenAllBuffers();
 	void GenFaces();
+	void CollectMaterials();
 
-	void AddVertices(const std::vector<Vertex>& vertices);
-	void AddIndices(unsigned count, unsigned faces = 6);
+	void AddVertices(const CubeType& type, const std::vector<Vertex>& vertices);
+	void AddIndices(const CubeType& type, unsigned faces = 6);
 
 	void BindTextures() const;
 	void UnbindTextures() const;
 	void DeleteTextures() const;
+
+	void DeleteBuffers() const;
 
 private:
 	// Positioning.
@@ -44,19 +55,15 @@ private:
 	Array3D<Cube> Cubes;
 	std::unordered_set<Texture2D, Texture2D::Hash> Textures;
 
-	// Vertices.
-	std::vector<Vertex> blocksVertices;
-	std::vector<GLuint> blocksIndices;
+	// Cubes Data.
+	std::unordered_map<CubeType, std::vector<Vertex>> blockTypeVertices;
+	std::unordered_map<CubeType, std::vector<GLuint>> blockTypeIndices;
+	std::unordered_map<CubeType, Material> blockTypeMaterial;
 
 	// Buffers.
-	VAO chunkVAO;
-	VBO chunkVBO;
-	EBO chunkEBO;
+	std::unordered_map<CubeType, Buffers> buffers;
 
 	// Perlin Noise.
 	const siv::PerlinNoise::seed_type seed = 1234567890u;
 	const siv::PerlinNoise perlinNoise{ seed };
-
-	// Temporary.
-	Material material;
 };

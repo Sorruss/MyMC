@@ -73,6 +73,11 @@ Texture2D Cube::Texture() const
 	return atlas;
 }
 
+Material Cube::GetMaterial() const
+{
+	return material;
+}
+
 void Cube::InitializeType()
 {
 	if (type == CubeType::EMPTY)
@@ -84,7 +89,7 @@ void Cube::InitializeType()
 
 	switch (type) {
 	case GRASS:
-		material.tint = glm::vec3(0.6f, 0.7f, 0.3f) * 1.3f;
+		material.tintTop = glm::vec3(0.6f, 0.7f, 0.3f) * 1.3f;
 		break;
 	default:
 		break;

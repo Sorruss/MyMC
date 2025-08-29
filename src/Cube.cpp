@@ -1,24 +1,23 @@
 #include "Cube.h"
 
-Cube::Cube(const CubeType& type) : vao(), type(type)
+Cube::Cube(const CubeType& type) : type(type)
 {
 	Position = glm::vec3(0.0f);
 
 	InitializeType();
-	InitializeBuffers();
+	InitializeData();
 }
 
-Cube::Cube(const CubeType& type, const glm::vec3& position) : vao(), type(type)
+Cube::Cube(const CubeType& type, const glm::vec3& position) : type(type)
 {
 	Position = position;
 
 	InitializeType();
-	InitializeBuffers();
+	InitializeData();
 }
 
 Cube::~Cube()
 {
-	vao.Delete();
 }
 
 void Cube::Draw(const ShaderProgram& shader, const Camera& camera, const glm::mat4& proj) const
@@ -41,11 +40,11 @@ void Cube::Draw(const ShaderProgram& shader, const Camera& camera, const glm::ma
 	model = glm::translate(model, Position);
 	shader.BindUniformMat4("model", glm::value_ptr(model));
 	
-	vao.Bind();
+	// vao.Bind();
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 	shader.Unbind();
-	vao.Unbind();
+	// vao.Unbind();
 	atlas.Unbind();
 }
 
@@ -96,7 +95,7 @@ void Cube::InitializeType()
 	}
 }
 
-void Cube::InitializeBuffers()
+void Cube::InitializeData()
 {
 	if (type == CubeType::EMPTY)
 		return;
@@ -104,15 +103,4 @@ void Cube::InitializeBuffers()
 	std::vector<GLfloat> vertices = TextureData::GetVerticesRaw(type);
 	std::vector<GLuint> indices = TextureData::GetIndices();
 	Vertices = TextureData::GetVerticesFormatted(type);
-
-	vao.Bind();
-	VBO triangleVBO(vertices.data(), vertices.size() * sizeof(GLfloat), GL_STATIC_DRAW);
-	EBO ebo(indices.data(), indices.size() * sizeof(GLuint), GL_STATIC_DRAW);
-	vao.LinkAttrib(0, 3, GL_FLOAT, sizeof(GL_FLOAT) * 8, (void*)0);
-	vao.LinkAttrib(1, 2, GL_FLOAT, sizeof(GL_FLOAT) * 8, (void*)(sizeof(GL_FLOAT) * 3));
-	vao.LinkAttrib(2, 3, GL_FLOAT, sizeof(GL_FLOAT) * 8, (void*)(sizeof(GL_FLOAT) * 5));
-	
-	vao.Unbind();
-	triangleVBO.Unbind();
-	ebo.Unbind();
 }

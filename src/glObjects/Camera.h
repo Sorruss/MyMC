@@ -15,6 +15,7 @@ public:
 	void Init(glm::vec3& up);
 	void processInput(GLFWwindow* window, float dt);
 	void calculateMatrix();
+	void Move(const glm::vec3& vector);
 	
 	void updateCursorOffset(float xOffset, float yOffset);
 	void updateFOV(double yoffset);
@@ -24,6 +25,8 @@ public:
 
 private:
 	float speed = 2.5f;
+	float maxSpeed = 30.0f;
+	float speedMultiplier = 10.0f;
 	float sensitivity = 0.1f;
 
 	float yaw = -90.0f;

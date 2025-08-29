@@ -26,12 +26,9 @@ public:
 
 private:
 	void InitializeType();
-	void InitializeBuffers();
+	void InitializeData();
 
 private:
-	// Buffers.
-	VAO vao;
-
 	// Properties.
 	CubeType type;
 	Material material;

@@ -134,7 +134,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Array3D.cpp" />
     <ClCompile Include="src\Chunk.cpp" />
     <ClCompile Include="src\Cube.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
@@ -151,6 +150,8 @@
     <ClCompile Include="src\glObjects\Texture2D.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="src\TextureData.cpp" />
+    <ClCompile Include="src\World.cpp" />
+    <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Array3D.h" />
@@ -168,6 +169,8 @@
     <ClInclude Include="src\glObjects\Texture2D.h" />
     <ClInclude Include="src\Vertex.h" />
     <ClInclude Include="src\TextureData.h" />
+    <ClInclude Include="src\World.h" />
+    <ClInclude Include="src\Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

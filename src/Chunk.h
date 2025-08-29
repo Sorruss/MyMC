@@ -21,10 +21,15 @@ struct Buffers
 class Chunk
 {
 public:
-	Chunk(const glm::vec2& position);
+	Chunk(const glm::vec2& position, unsigned size = 16u);
+	~Chunk();
 
 	void Render(const ShaderProgram& shader, const Camera& camera, const glm::mat4& proj);
 	void Delete();
+
+	std::pair<int, int> getKey() const;
+	void GenerateData();
+	void GenerateOpenGLData();
 
 private:
 	float* const GenChunk();
@@ -32,7 +37,7 @@ private:
 	void GenBuffers(const CubeType& type);
 	void GenAllBuffers();
 	void GenFaces();
-	void CollectMaterials();
+	void AddFace(const CubeType& type, const Cube& cube, const Side& side);
 
 	void AddVertices(const CubeType& type, const std::vector<Vertex>& vertices);
 	void AddIndices(const CubeType& type, unsigned faces = 6);
@@ -46,10 +51,11 @@ private:
 private:
 	// Positioning.
 	glm::vec3 Position;
+	glm::vec2 ChunkPosition;
 
-	const unsigned Size_X = 16;
-	unsigned Size_Y = 16;
-	const unsigned Size_Z = 16;
+	unsigned Size_X = 16u;
+	unsigned Size_Y = 32;
+	unsigned Size_Z = 16u;
 
 	// Naive Meshing.
 	Array3D<Cube> Cubes;

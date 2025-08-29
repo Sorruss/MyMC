@@ -55,6 +55,7 @@ Game::Game(float width, float height)
 	glfwSetScrollCallback(window, static_mouse_scroll_callback);
 	glm::vec3 up{ 0.0f, 1.0f, 0.0f };
 	camera.Init(up);
+	camera.Move(glm::vec3(0.0f, 20.0f, 0.0f));
 
 	// Loading atlases.
 	ResourceManager::LoadTexture("atlas-1", "Resources/Textures/atlas_terrain.png", 0);
@@ -68,7 +69,7 @@ Game::~Game()
 void Game::run()
 {
 	ShaderProgram& defaultShader = ResourceManager::GetShader("default");
-	Chunks.emplace_back(glm::vec2(0.0f, 0.0f));
+	World world(16u);
 
 	float lastDT = 0.0f;
 	while (!glfwWindowShouldClose(window))
@@ -84,12 +85,15 @@ void Game::run()
 		glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		update(deltaTime);
 		render();
+		
 		glfwSwapBuffers(window); // Swapping front and back buffers.
 		glfwPollEvents(); // Polling instructed user events so glfw can call respective callback functions to handle them.
 	}
 
 	ResourceManager::Clear();
+	world.Delete();
 	glfwTerminate();
 }
 
@@ -105,21 +109,13 @@ void Game::processInput(float dt)
 
 void Game::update(float dt)
 {
-
+	world.Update(camera.pos);
 }
 
 void Game::render()
 {
 	glm::mat4 projection = glm::perspective(glm::radians(camera.fov), Width / Height, 0.1f, 100.0f);
-	for (Cube& cube : Cubes)
-	{
-		cube.Draw(ResourceManager::GetShader("default"), camera, projection);
-	}
-
-	for (Chunk& chunk : Chunks)
-	{
-		chunk.Render(ResourceManager::GetShader("default"), camera, projection);
-	}
+	world.Render(ResourceManager::GetShader("default"), camera, projection);
 }
 
 void Game::framebuffer_size_callback(int width, int height)

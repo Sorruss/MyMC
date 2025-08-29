@@ -48,6 +48,11 @@ void Camera::calculateMatrix()
 	view = glm::lookAt(pos, pos + front, worldUp);
 }
 
+void Camera::Move(const glm::vec3& vector)
+{
+	pos += vector;
+}
+
 void Camera::updateCursorOffset(float xOffset, float yOffset)
 {
 	xOffset *= sensitivity;
@@ -87,10 +92,10 @@ void Camera::updateFOV(double yoffset)
 
 void Camera::updateSpeed(double yoffset)
 {
-	speed += static_cast<float>(yoffset);
-	if (speed > 10.0f)
+	speed += static_cast<float>(yoffset) * speedMultiplier;
+	if (speed > maxSpeed)
 	{
-		speed = 10.0f;
+		speed = maxSpeed;
 	}
 	else if (speed < 1.0f)
 	{

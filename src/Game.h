@@ -13,8 +13,7 @@
 #include "glObjects/EBO.h"
 #include "glObjects/Camera.h"
 #include "ResourceManager.h"
-#include "Cube.h"
-#include "Chunk.h"
+#include "World.h"
 
 enum GameState {
 	GAME_ACTIVE = 0,
@@ -65,6 +64,6 @@ private:
 	bool isFirstMouseInput = true;
 
 	// Game Objects.
-	std::vector<Cube> Cubes;
-	std::vector<Chunk> Chunks;
+	World world;
+	unsigned chunkXZSize = 16u;
 };

@@ -1,18 +1,17 @@
 #include "Chunk.h"
+#include "World.h"
 
-Chunk::Chunk(const glm::vec2& position)
+#define TIMER 0
+
+Chunk::Chunk(const glm::vec2& position, unsigned size)
+	: ChunkPosition(position), Size_X(size), Size_Z(size)
 {
 	Position = glm::vec3(position.x * Size_X, 0.0f, position.y * Size_Z);
-
 	Cubes.Init(Size_X, Size_Z, Size_Y);
-	float* const heightMap = GenChunk();
-	
-	GenBlocks(heightMap);
-	delete[] heightMap;
-	GenFaces();
-	Cubes.Delete();
-	GenAllBuffers();
-	CollectMaterials();
+}
+
+Chunk::~Chunk()
+{
 }
 
 void Chunk::Render(const ShaderProgram& shader, const Camera& camera, const glm::mat4& proj)
@@ -49,10 +48,30 @@ void Chunk::Delete()
 	DeleteTextures();
 }
 
+std::pair<int, int> Chunk::getKey() const
+{
+	return std::pair<int, int>(ChunkPosition.x, ChunkPosition.y);
+}
+
+void Chunk::GenerateData()
+{
+	float* const heightMap = GenChunk();
+
+	GenBlocks(heightMap);
+	delete[] heightMap;
+	GenFaces();
+	Cubes.Delete();
+}
+
+void Chunk::GenerateOpenGLData()
+{
+	GenAllBuffers();
+}
+
 float* const Chunk::GenChunk()
 {
 	float* const heightMap = new float[Size_X * Size_Z];
-	const float scale = 0.05f;
+	const float scale = 0.01f;
 	const int32_t octaves = 3;
 
 	for (unsigned x{}; x < Size_X; ++x)
@@ -71,29 +90,42 @@ float* const Chunk::GenChunk()
 
 void Chunk::GenBlocks(float* const heightMap)
 {
+#if TIMER
+	Timer timer("GenBlocks");
+#endif
+
+	static const Cube grassCube(CubeType::GRASS);
+	static const Cube dirtCube(CubeType::DIRT);
+	static const Cube emptyCube(CubeType::EMPTY);
+
+	blockTypeMaterial.clear();
+	blockTypeMaterial[CubeType::GRASS] = grassCube.GetMaterial();
+	blockTypeMaterial[CubeType::DIRT] = dirtCube.GetMaterial();
+
 	for (unsigned x{}; x < Size_X; ++x)
 	{
 		for (unsigned z{}; z < Size_Z; ++z)
 		{
-			for (float y{}; y < Size_Y; ++y)
+			const int height = static_cast<int>(heightMap[x * Size_Z + z]);
+			const float posX = static_cast<float>(x);
+			const float posZ = static_cast<float>(z);
+
+			for (unsigned y{}; y < Size_Y; ++y)
 			{
-				int height = static_cast<int>(heightMap[x * Size_Z + z]);
+				const float posY = static_cast<float>(y);
 				if (y == height - 1)
 				{
-					Cube cube(CubeType::GRASS);
-					cube.MoveVertices(glm::vec3(static_cast<float>(x), y, static_cast<float>(z)));
-					Cubes.at(x, z, static_cast<int>(y)) = cube;
+					Cubes.at(x, z, y) = grassCube;
+					Cubes.at(x, z, y).MoveVertices(glm::vec3(posX, posY, posZ));
 				}
 				else if (y < height - 1)
 				{
-					Cube cube(CubeType::DIRT);
-					cube.MoveVertices(glm::vec3(static_cast<float>(x), y, static_cast<float>(z)));
-					Cubes.at(x, z, static_cast<int>(y)) = cube;
+					Cubes.at(x, z, y) = dirtCube;
+					Cubes.at(x, z, y).MoveVertices(glm::vec3(posX, posY, posZ));
 				}
 				else
 				{
-					Cube cube(CubeType::EMPTY);
-					Cubes.at(x, z, static_cast<int>(y)) = cube;
+					Cubes.at(x, z, y) = emptyCube;
 				}
 			}
 		}
@@ -102,9 +134,10 @@ void Chunk::GenBlocks(float* const heightMap)
 
 void Chunk::AddVertices(const CubeType& type, const std::vector<Vertex>& vertices)
 {
-	for (auto& vertex : vertices)
+	std::vector<Vertex>& verts = blockTypeVertices[type];
+	for (const Vertex& vertex : vertices)
 	{
-		blockTypeVertices[type].emplace_back(vertex);
+		verts.emplace_back(vertex);
 	}
 }
 
@@ -112,14 +145,15 @@ void Chunk::AddIndices(const CubeType& type, unsigned faces)
 {
 	unsigned count = blockTypeIndices[type].size() / 6;
 	unsigned offset = count * faces * 4;
+	std::vector<GLuint>& ids = blockTypeIndices.at(type);
 	for (unsigned i{}; i < faces; ++i)
 	{
-		blockTypeIndices.at(type).emplace_back(offset);
-		blockTypeIndices.at(type).emplace_back(offset + 1);
-		blockTypeIndices.at(type).emplace_back(offset + 2);
-		blockTypeIndices.at(type).emplace_back(offset + 2);
-		blockTypeIndices.at(type).emplace_back(offset + 3);
-		blockTypeIndices.at(type).emplace_back(offset);
+		ids.emplace_back(offset);
+		ids.emplace_back(offset + 1);
+		ids.emplace_back(offset + 2);
+		ids.emplace_back(offset + 2);
+		ids.emplace_back(offset + 3);
+		ids.emplace_back(offset);
 
 		offset += 4;
 	}
@@ -172,21 +206,23 @@ void Chunk::GenBuffers(const CubeType& type)
 	}
 
 	buffers[type].vao = VAO();
-	buffers.at(type).vao.Bind();
-	buffers.at(type).vbo = VBO(vertices, size * sizeof(GLfloat), GL_STATIC_DRAW);
-	buffers.at(type).vao.LinkAttrib(0, 3, GL_FLOAT, sizeof(GLfloat) * 8, (void*)0);
-	buffers.at(type).vao.LinkAttrib(1, 2, GL_FLOAT, sizeof(GLfloat) * 8, (void*)(sizeof(GLfloat) * 3));
-	buffers.at(type).vao.LinkAttrib(2, 3, GL_FLOAT, sizeof(GLfloat) * 8, (void*)(sizeof(GLfloat) * 5));
-	buffers.at(type).ebo = EBO(blockTypeIndices.at(type).data(), blockTypeIndices.at(type).size() * sizeof(GLuint), GL_STATIC_DRAW);
+	Buffers& bfs = buffers.at(type);
+	bfs.vao.Bind();
+	bfs.vbo = VBO(vertices, size * sizeof(GLfloat), GL_STATIC_DRAW);
+	bfs.vao.LinkAttrib(0, 3, GL_FLOAT, sizeof(GLfloat) * 8, (void*)0);
+	bfs.vao.LinkAttrib(1, 2, GL_FLOAT, sizeof(GLfloat) * 8, (void*)(sizeof(GLfloat) * 3));
+	bfs.vao.LinkAttrib(2, 3, GL_FLOAT, sizeof(GLfloat) * 8, (void*)(sizeof(GLfloat) * 5));
+	bfs.ebo = EBO(blockTypeIndices.at(type).data(), blockTypeIndices.at(type).size() * sizeof(GLuint), GL_STATIC_DRAW);
 
-	buffers.at(type).vao.Unbind();
-	buffers.at(type).vbo.Unbind();
-	buffers.at(type).ebo.Unbind();
+	bfs.vao.Unbind();
+	bfs.vbo.Unbind();
+	bfs.ebo.Unbind();
 	delete[] vertices;
 }
 
 void Chunk::GenAllBuffers()
 {
+	buffers.clear();
 	for (const auto& entry : blockTypeVertices)
 	{
 		GenBuffers(entry.first);
@@ -195,53 +231,57 @@ void Chunk::GenAllBuffers()
 
 void Chunk::GenFaces()
 {
+#if TIMER
+	Timer timer("GenFaces");
+#endif
+
+	for (auto& [type, vertices] : blockTypeVertices) vertices.clear();
+	for (auto& [type, indices] : blockTypeIndices) indices.clear();
+	Textures.clear();
+
+	Textures.insert(ResourceManager::GetTexture("atlas-1"));
+
 	for (int x{}; x < Size_X; ++x)
 	{
 		for (int z{}; z < Size_Z; ++z)
 		{
 			for (int y{}; y < Size_Y; ++y)
 			{
-				CubeType type = Cubes.at(x, z, y).Type();
+				const Cube& cube = Cubes.at(x, z, y);
+				const CubeType& type = cube.Type();
 				if (type == CubeType::EMPTY)
 				{
 					continue;
 				}
-				Textures.insert(Cubes.at(x, z, y).Texture());
-
+				
 				// Right & Left.
 				if (x == Size_X - 1 || Cubes.at(x + 1, z, y).Type() == CubeType::EMPTY)
 				{
-					AddVertices(type, Cubes.at(x, z, y).GetVerticesSide(Side::RIGHT));
-					AddIndices(type, 1);
+					AddFace(type, cube, Side::RIGHT);
 				}
 				if (x == 0 || Cubes.at(x - 1, z, y).Type() == CubeType::EMPTY)
 				{
-					AddVertices(type, Cubes.at(x, z, y).GetVerticesSide(Side::LEFT));
-					AddIndices(type, 1);
+					AddFace(type, cube, Side::LEFT);
 				}
 				// Back & Front.
 				if (z == Size_Z - 1 || Cubes.at(x, z + 1, y).Type() == CubeType::EMPTY)
 				{
-					AddVertices(type, Cubes.at(x, z, y).GetVerticesSide(Side::FRONT));
-					AddIndices(type, 1);
+					AddFace(type, cube, Side::FRONT);
 				}
 				if (z == 0 || Cubes.at(x, z - 1, y).Type() == CubeType::EMPTY)
 				{
-					AddVertices(type, Cubes.at(x, z, y).GetVerticesSide(Side::BACK));
-					AddIndices(type, 1);
+					AddFace(type, cube, Side::BACK);
 				}
 				// Top & Bottom.
 				if (y == Size_Y - 1 || Cubes.at(x, z, y + 1).Type() == CubeType::EMPTY)
 				{
-					AddVertices(type, Cubes.at(x, z, y).GetVerticesSide(Side::TOP));
-					AddIndices(type, 1);
+					AddFace(type, cube, Side::TOP);
 				}
-				if (1)
+				if (0)
 				{
 					if (y == 0 || Cubes.at(x, z, y - 1).Type() == CubeType::EMPTY)
 					{
-						AddVertices(type, Cubes.at(x, z, y).GetVerticesSide(Side::BOTTOM));
-						AddIndices(type, 1);
+						AddFace(type, cube, Side::BOTTOM);
 					}
 				}
 			}
@@ -249,11 +289,9 @@ void Chunk::GenFaces()
 	}
 }
 
-void Chunk::CollectMaterials()
+void Chunk::AddFace(const CubeType& type, const Cube& cube, const Side& side)
 {
-	for (const auto& entry : blockTypeVertices)
-	{
-		Cube cube(entry.first);
-		blockTypeMaterial[entry.first] = cube.GetMaterial();
-	}
+	const std::vector<Vertex>& vertices = cube.GetVerticesSide(side);
+	AddVertices(type, vertices);
+	AddIndices(type, 1);
 }

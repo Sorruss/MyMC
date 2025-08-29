@@ -9,6 +9,19 @@ public:
 	{
 		Init(x, y, z);
 	}
+	Array3D(const Array3D<T>& other)
+	{
+		Init(other.X, other.Y, other.Z);
+		memcpy(Data, other.Data, X * Y * Z);
+	}
+	Array3D(Array3D<T>&& other) noexcept
+		: X(other.X), Y(other.Y), Z(other.Z), Data(other.Data)
+	{
+		other.X = 0;
+		other.Z = 0;
+		other.X = 0;
+		other.Data = nullptr;
+	}
 	
 	void Init(unsigned x, unsigned y, unsigned z)
 	{

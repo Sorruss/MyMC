@@ -15,6 +15,11 @@
 #include "ResourceManager.h"
 #include "World.h"
 
+enum CursorMode {
+	DISABLED = 0,
+	NORMAL,
+};
+
 enum GameState {
 	GAME_ACTIVE = 0,
 	GAME_MENU,
@@ -47,6 +52,8 @@ private:
 	static void static_mouse_move_callback(GLFWwindow* window, double xpos, double ypos);
 	static void static_mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
+	void setCursorMode(const CursorMode& mode);
+
 private:
 	// Game state.
 	GameState State = GameState::GAME_ACTIVE;
@@ -62,6 +69,7 @@ private:
 	float lastCursorX = Width / 2;
 	float lastCursorY = Height / 2;
 	bool isFirstMouseInput = true;
+	CursorMode cursorMode = CursorMode::DISABLED;
 
 	// Game Objects.
 	World world;

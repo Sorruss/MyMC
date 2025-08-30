@@ -24,6 +24,11 @@ struct Vertex
 		Normal = glm::vec3(data[5], data[6], data[7]);
 	}
 
+	const GLfloat* GetData() const
+	{
+		return &Position.x;
+	}
+
 	std::vector<GLfloat> GetRaw() const
 	{
 		std::vector<GLfloat> raw;

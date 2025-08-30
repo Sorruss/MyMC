@@ -61,11 +61,13 @@ void Chunk::GenerateData()
 	delete[] heightMap;
 	GenFaces();
 	Cubes.Delete();
+	GenBuffersData();
 }
 
 void Chunk::GenerateOpenGLData()
 {
 	GenAllBuffers();
+	DeleteBuffersData();
 }
 
 float* const Chunk::GenChunk()
@@ -132,6 +134,28 @@ void Chunk::GenBlocks(float* const heightMap)
 	}
 }
 
+void Chunk::GenBuffersData()
+{
+#if TIMER
+	Timer timer("GenBuffersData");
+#endif
+
+	for (const auto& [type, vertices] : blockTypeVertices)
+	{
+		const unsigned size = static_cast<unsigned>(vertices.size()) * 8u;
+		GLfloat* verts = new GLfloat[size];
+
+		int vertexCount = 0;
+		for (const Vertex& vertex : vertices)
+		{
+			memcpy(&verts[vertexCount], vertex.GetData(), sizeof(GLfloat) * 8);
+			vertexCount += 8;
+		}
+
+		BuffersData.try_emplace(type, verts, size);
+	}
+}
+
 void Chunk::AddVertices(const CubeType& type, const std::vector<Vertex>& vertices)
 {
 	std::vector<Vertex>& verts = blockTypeVertices[type];
@@ -193,22 +217,22 @@ void Chunk::DeleteBuffers() const
 	}
 }
 
+void Chunk::DeleteBuffersData()
+{
+	for (auto& [type, data] : BuffersData)
+	{
+		delete[] data.data;
+	}
+	BuffersData.clear();
+}
+
 void Chunk::GenBuffers(const CubeType& type)
 {
-	const unsigned size = static_cast<unsigned>(blockTypeVertices.at(type).size()) * 8u;
-	GLfloat* vertices = new GLfloat[size];
-
-	int vertexCount = 0;
-	for (const Vertex& vertex : blockTypeVertices.at(type))
-	{
-		memcpy(&vertices[vertexCount], vertex.GetRaw().data(), sizeof(GLfloat) * 8);
-		vertexCount += 8;
-	}
-
+	GLfloat* vertices = BuffersData.at(type).data;
 	buffers[type].vao = VAO();
 	Buffers& bfs = buffers.at(type);
 	bfs.vao.Bind();
-	bfs.vbo = VBO(vertices, size * sizeof(GLfloat), GL_STATIC_DRAW);
+	bfs.vbo = VBO(vertices, BuffersData.at(type).size * sizeof(GLfloat), GL_STATIC_DRAW);
 	bfs.vao.LinkAttrib(0, 3, GL_FLOAT, sizeof(GLfloat) * 8, (void*)0);
 	bfs.vao.LinkAttrib(1, 2, GL_FLOAT, sizeof(GLfloat) * 8, (void*)(sizeof(GLfloat) * 3));
 	bfs.vao.LinkAttrib(2, 3, GL_FLOAT, sizeof(GLfloat) * 8, (void*)(sizeof(GLfloat) * 5));
@@ -217,7 +241,6 @@ void Chunk::GenBuffers(const CubeType& type)
 	bfs.vao.Unbind();
 	bfs.vbo.Unbind();
 	bfs.ebo.Unbind();
-	delete[] vertices;
 }
 
 void Chunk::GenAllBuffers()

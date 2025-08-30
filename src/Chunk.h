@@ -18,6 +18,17 @@ struct Buffers
 	EBO ebo;
 };
 
+struct BufferData
+{
+	BufferData(GLfloat* dataPointer, const unsigned dataSize)
+		: data(dataPointer), size(dataSize)
+	{
+	}
+
+	GLfloat* data;
+	const unsigned size;
+};
+
 class Chunk
 {
 public:
@@ -34,6 +45,7 @@ public:
 private:
 	float* const GenChunk();
 	void GenBlocks(float* const heightMap);
+	void GenBuffersData();
 	void GenBuffers(const CubeType& type);
 	void GenAllBuffers();
 	void GenFaces();
@@ -47,6 +59,7 @@ private:
 	void DeleteTextures() const;
 
 	void DeleteBuffers() const;
+	void DeleteBuffersData();
 
 private:
 	// Positioning.
@@ -68,6 +81,7 @@ private:
 
 	// Buffers.
 	std::unordered_map<CubeType, Buffers> buffers;
+	std::unordered_map<CubeType, BufferData> BuffersData;
 
 	// Perlin Noise.
 	const siv::PerlinNoise::seed_type seed = 1234567890u;

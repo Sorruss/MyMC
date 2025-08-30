@@ -104,7 +104,19 @@ void Game::processInput(float dt)
 		glfwSetWindowShouldClose(window, true);
 	}
 
-	camera.processInput(window, dt);
+	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	{
+		setCursorMode(CursorMode::NORMAL);
+	}
+	else if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_RELEASE)
+	{
+		setCursorMode(CursorMode::DISABLED);
+	}
+	
+	if (cursorMode == CursorMode::DISABLED)
+	{
+		camera.processInput(window, dt);
+	}
 }
 
 void Game::update(float dt)
@@ -127,6 +139,11 @@ void Game::framebuffer_size_callback(int width, int height)
 
 void Game::mouse_move_callback(double xpos, double ypos)
 {
+	if (cursorMode != CursorMode::DISABLED)
+	{
+		return;
+	}
+
 	float xposf = static_cast<float>(xpos);
 	float yposf = static_cast<float>(ypos);
 
@@ -147,6 +164,11 @@ void Game::mouse_move_callback(double xpos, double ypos)
 
 void Game::mouse_scroll_callback(double xoffset, double yoffset)
 {
+	if (cursorMode != CursorMode::DISABLED)
+	{
+		return;
+	}
+
 	//camera.updateFOV(yoffset);
 	camera.updateSpeed(yoffset);
 }
@@ -176,4 +198,21 @@ void Game::static_mouse_scroll_callback(GLFWwindow* window, double xoffset, doub
 	{
 		game->mouse_scroll_callback(xoffset, yoffset);
 	}
+}
+
+void Game::setCursorMode(const CursorMode& mode)
+{
+	switch (mode)
+	{
+	case CursorMode::NORMAL:
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		break;
+	case CursorMode::DISABLED:
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		break;
+	default:
+		break;
+	}
+
+	cursorMode = mode;
 }

@@ -7,6 +7,7 @@ std::vector<Vertex> GameObject::GetVertices() const
 
 void GameObject::MoveVertices(const glm::vec3& offset)
 {
+	Position += offset;
 	for (Vertex& vertex : Vertices)
 	{
 		vertex.Position += offset;

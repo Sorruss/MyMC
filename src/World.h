@@ -56,6 +56,15 @@ struct PairHash
 	}
 };
 
+struct ChunkTask {
+	std::pair<int, int> key;
+	float priority;
+
+	bool operator<(const ChunkTask& other) const {
+		return priority > other.priority;
+	}
+};
+
 class World
 {
 public:
@@ -70,16 +79,21 @@ private:
 
 	void LoadChunks(const glm::vec2& playerChunkPos);
 	void UnloadDistantChunks(const glm::vec2& playerChunkPos);
+	void CleanupFinishedFutures();
+	void AddReadyChunks();
+	void ProcessChunkQueue();
 
 private:
 	std::unordered_map<std::pair<int, int>, Chunk*, PairHash> Chunks;
+	std::priority_queue<ChunkTask> ChunksToGenerate;
+	std::unordered_set<std::pair<int, int>, PairHash> ChunksWaiting;
 
 	float RenderDistance = 5.0f;
 	glm::vec2 LastPlayerChunkPos;
 	unsigned ChunkSize;
 
 	// async stuff.
-	ChunkQueue ChunksQueue;
+	ChunkQueue ChunksGenerated;
 	std::vector<std::future<void>> Futures;
 	std::mutex Mutex;
 	const int MaxTasks = 16;
